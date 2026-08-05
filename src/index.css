@@ -1,0 +1,19 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  background-color: #f4f4f8;
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 讓手機全螢幕感 */
+#root {
+  display: flex;
+  flex-direction: column;
+}
