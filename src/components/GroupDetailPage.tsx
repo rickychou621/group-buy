@@ -23,6 +23,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
@@ -40,6 +41,8 @@ import {
 } from '../utils'
 import MemberFormDialog from './MemberFormDialog'
 import GroupFormDialog from './GroupFormDialog'
+import OrderSummaryDialog from './OrderSummaryDialog'
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'
 
 interface Props {
   groupId: string
@@ -47,7 +50,7 @@ interface Props {
 }
 
 export default function GroupDetailPage({ groupId, onBack }: Props) {
-  const { getGroup, members, updateGroupStatus, deleteGroup, togglePaid, deleteMember } =
+  const { getGroup, members, updateGroupStatus, deleteGroup, togglePaid, deleteMember, isAdmin, isMyMember } =
     useGroupBuy()
 
   const group = getGroup(groupId)
@@ -56,10 +59,12 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
   const [memberFormOpen, setMemberFormOpen] = useState(false)
   const [editMember, setEditMember] = useState<Member | undefined>()
   const [groupEditOpen, setGroupEditOpen] = useState(false)
+  const [orderSummaryOpen, setOrderSummaryOpen] = useState(false)
   const [deleteGroupConfirm, setDeleteGroupConfirm] = useState(false)
   const [deleteMemberTarget, setDeleteMemberTarget] = useState<string | null>(null)
   const [groupMenuAnchor, setGroupMenuAnchor] = useState<null | HTMLElement>(null)
   const [memberMenuTarget, setMemberMenuTarget] = useState<{ el: HTMLElement; member: Member } | null>(null)
+  const [showAllProducts, setShowAllProducts] = useState(false)
 
   if (!group) {
     return (
@@ -107,9 +112,20 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
         <IconButton onClick={onBack} size="small">
           <ArrowBackIcon />
         </IconButton>
-        <Typography noWrap sx={{ flex: 1, ml: 0.5, fontSize: '1rem', fontWeight: 700 }}>
-          {group.title}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, ml: 0.5, minWidth: 0 }}>
+          <Typography noWrap sx={{ fontSize: '1rem', fontWeight: 700 }}>
+            {group.title}
+          </Typography>
+          {isAdmin && (
+            <Chip 
+              icon={<AdminPanelSettingsIcon />}
+              label="管理員" 
+              size="small" 
+              color="primary"
+              sx={{ ml: 1, height: 22, fontSize: '0.7rem', '& .MuiChip-icon': { fontSize: '1rem' } }} 
+            />
+          )}
+        </Box>
         <IconButton size="small" onClick={(e) => setGroupMenuAnchor(e.currentTarget)}>
           <MoreVertIcon />
         </IconButton>
@@ -121,16 +137,18 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
           <EditOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
           編輯團購資訊
         </MenuItem>
-        {transition && (
+        {isAdmin && transition && (
           <MenuItem onClick={() => { setGroupMenuAnchor(null); updateGroupStatus(groupId, transition.to) }}>
             {transition.label}
           </MenuItem>
         )}
-        <Divider />
-        <MenuItem sx={{ color: 'error.main' }} onClick={() => { setGroupMenuAnchor(null); setDeleteGroupConfirm(true) }}>
-          <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
-          刪除此團購
-        </MenuItem>
+        {isAdmin && <Divider />}
+        {isAdmin && (
+          <MenuItem sx={{ color: 'error.main' }} onClick={() => { setGroupMenuAnchor(null); setDeleteGroupConfirm(true) }}>
+            <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
+            刪除此團購
+          </MenuItem>
+        )}
       </Menu>
 
       {/* 統計區 */}
@@ -191,9 +209,22 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
 
       {/* 商品清單 */}
       <Box sx={{ px: 2.5, py: 1.5, bgcolor: 'background.paper' }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', mb: 1 }}>商品清單</Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>商品清單</Typography>
+          {groupMembers.length > 0 && (
+            <Button 
+              size="small" 
+              variant="outlined" 
+              startIcon={<FormatListBulletedIcon />}
+              onClick={() => setOrderSummaryOpen(true)}
+              sx={{ py: 0.2, px: 1 }}
+            >
+              總計
+            </Button>
+          )}
+        </Box>
         <Stack spacing={0.75}>
-          {group.products.map((p) => (
+          {(showAllProducts ? group.products : group.products.slice(0, 5)).map((p) => (
             <Box key={p.id} sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography sx={{ fontSize: '0.875rem' }}>
                 {p.name}
@@ -208,6 +239,15 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
               </Typography>
             </Box>
           ))}
+          {group.products.length > 5 && (
+            <Button
+              size="small"
+              onClick={() => setShowAllProducts(!showAllProducts)}
+              sx={{ color: 'text.secondary', py: 0.5, mt: 1 }}
+            >
+              {showAllProducts ? '收合' : `顯示更多 (${group.products.length - 5})`}
+            </Button>
+          )}
         </Stack>
       </Box>
 
@@ -216,14 +256,16 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
       {/* 成員列表 */}
       <Box sx={{ px: 2, pt: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>
-            參團名單（{groupMembers.length} 人）
-          </Typography>
-          {groupMembers.length > 0 && (
-            <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
-              點擊圓圈標記付款
+          <Box>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>
+              參團名單（{groupMembers.length} 人）
             </Typography>
-          )}
+            {isAdmin && groupMembers.length > 0 && (
+              <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
+                點擊圓圈標記付款
+              </Typography>
+            )}
+          </Box>
         </Box>
 
         {groupMembers.length === 0 && (
@@ -239,14 +281,16 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
             return (
               <Box key={member.id} sx={{ py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 {/* 付款狀態切換 */}
-                <IconButton
-                  size="small"
-                  onClick={() => togglePaid(member.id)}
-                  color={member.paid ? 'success' : 'default'}
-                  sx={{ flexShrink: 0 }}
-                >
-                  {member.paid ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
-                </IconButton>
+                {isAdmin && (
+                  <IconButton
+                    size="small"
+                    onClick={() => togglePaid(member.id)}
+                    color={member.paid ? 'success' : 'default'}
+                    sx={{ flexShrink: 0 }}
+                  >
+                    {member.paid ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
+                  </IconButton>
+                )}
 
                 {/* 頭像 */}
                 <Avatar
@@ -293,9 +337,13 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
                 </Typography>
 
                 {/* 選單 */}
-                <IconButton size="small" onClick={(e) => setMemberMenuTarget({ el: e.currentTarget, member })}>
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
+                {(isAdmin || isMyMember(member.id)) ? (
+                  <IconButton size="small" onClick={(e) => setMemberMenuTarget({ el: e.currentTarget, member })}>
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
+                ) : (
+                  <Box sx={{ width: 26 }} /> /* 佔位符 */
+                )}
               </Box>
             )
           })}
@@ -324,16 +372,18 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
       </Menu>
 
       {/* FAB */}
-      <Fab
-        variant="extended"
-        color="primary"
-        aria-label="我要參團"
-        onClick={() => { setEditMember(undefined); setMemberFormOpen(true) }}
-        sx={{ position: 'fixed', bottom: 24, right: 24, boxShadow: 6 }}
-      >
-        <PersonAddAltIcon sx={{ mr: 1 }} />
-        我要參團
-      </Fab>
+      {(isAdmin || group.status === 'OPEN') && (
+        <Fab
+          variant="extended"
+          color="primary"
+          aria-label="我要參團"
+          onClick={() => { setEditMember(undefined); setMemberFormOpen(true) }}
+          sx={{ position: 'fixed', bottom: 24, right: 24, boxShadow: 6 }}
+        >
+          <PersonAddAltIcon sx={{ mr: 1 }} />
+          我要參團
+        </Fab>
+      )}
 
       {/* Dialogs */}
       <MemberFormDialog
@@ -342,7 +392,18 @@ export default function GroupDetailPage({ groupId, onBack }: Props) {
         group={group}
         editMember={editMember}
       />
-      <GroupFormDialog open={groupEditOpen} onClose={() => setGroupEditOpen(false)} editGroup={group} />
+      <GroupFormDialog 
+        open={groupEditOpen} 
+        onClose={() => setGroupEditOpen(false)} 
+        editGroup={group} 
+        members={groupMembers} 
+      />
+      <OrderSummaryDialog 
+        open={orderSummaryOpen} 
+        onClose={() => setOrderSummaryOpen(false)} 
+        group={group} 
+        members={groupMembers} 
+      />
 
       <Dialog open={deleteGroupConfirm} onClose={() => setDeleteGroupConfirm(false)}>
         <DialogTitle>刪除團購</DialogTitle>

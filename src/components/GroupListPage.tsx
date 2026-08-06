@@ -9,14 +9,17 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  IconButton,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import type { GroupStatus } from '../types'
 import { useGroupBuy } from '../GroupBuyContext'
 import { calcGroupStats, fmtAmount, fmtDate, isExpired, statusColor, statusLabel } from '../utils'
 import GroupFormDialog from './GroupFormDialog'
+import AdminLoginDialog from './AdminLoginDialog'
 import logoUrl from '../assets/logo.jpg'
 
 interface Props {
@@ -31,9 +34,11 @@ const FILTERS: { label: string; value: GroupStatus | 'ALL' }[] = [
 ]
 
 export default function GroupListPage({ onSelectGroup }: Props) {
-  const { groups, members } = useGroupBuy()
+  const { groups, members, isAdmin, logout } = useGroupBuy()
   const [filter, setFilter] = useState<GroupStatus | 'ALL'>('ALL')
   const [createOpen, setCreateOpen] = useState(false)
+  const [adminOpen, setAdminOpen] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
 
   const filtered = groups.filter((g) => filter === 'ALL' || g.status === filter)
 
@@ -49,20 +54,45 @@ export default function GroupListPage({ onSelectGroup }: Props) {
           color: '#fff',
         }}
       >
-        <Typography sx={{ fontSize: '0.75rem', opacity: 0.8, color: 'inherit' }}>團購管理</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-          <Box
-            component="img"
-            src={logoUrl}
-            sx={{ width: 28, height: 28, borderRadius: 1 }}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography sx={{ fontSize: '0.75rem', opacity: 0.8, color: 'inherit' }}>團購管理</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              <Box
+                component="img"
+                src={logoUrl}
+                sx={{ 
+                  width: 32, 
+                  height: 32, 
+                  borderRadius: 1.5,
+                  border: '2px solid #fff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  bgcolor: '#fff'
+                }}
+              />
+              <Typography sx={{ fontSize: '1.4rem', fontWeight: 700, color: 'inherit' }}>
+                我的團購
+              </Typography>
+            </Box>
+            <Typography sx={{ fontSize: '0.85rem', mt: 0.5, opacity: 0.75, color: 'inherit' }}>
+              共 {groups.length} 個活動
+            </Typography>
+          </Box>
+          <Chip
+            label={isAdmin ? '管理登出' : '管理登入'}
+            icon={<AdminPanelSettingsIcon fontSize="small" />}
+            onClick={() => isAdmin ? logout() : setAdminOpen(true)}
+            size="small"
+            sx={{ 
+              color: 'inherit', 
+              borderColor: 'rgba(255,255,255,0.4)',
+              bgcolor: isAdmin ? 'rgba(255,255,255,0.25)' : 'transparent',
+              '& .MuiChip-icon': { color: 'inherit' }
+            }}
+            variant="outlined"
+            clickable
           />
-          <Typography sx={{ fontSize: '1.4rem', fontWeight: 700, color: 'inherit' }}>
-            我的團購
-          </Typography>
         </Box>
-        <Typography sx={{ fontSize: '0.85rem', mt: 0.5, opacity: 0.75, color: 'inherit' }}>
-          共 {groups.length} 個活動
-        </Typography>
       </Box>
 
       {/* 篩選列 */}
@@ -179,7 +209,7 @@ export default function GroupListPage({ onSelectGroup }: Props) {
                 {/* 商品 Chip */}
                 {group.products.length > 0 && (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                    {group.products.map((p) => (
+                    {(expandedGroups[group.id] ? group.products : group.products.slice(0, 5)).map((p) => (
                       <Chip
                         key={p.id}
                         label={p.name}
@@ -188,6 +218,32 @@ export default function GroupListPage({ onSelectGroup }: Props) {
                         sx={{ fontSize: '0.68rem', height: 20 }}
                       />
                     ))}
+                    {!expandedGroups[group.id] && group.products.length > 5 && (
+                      <Chip
+                        label={`+${group.products.length - 5} 顯示更多`}
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setExpandedGroups(prev => ({ ...prev, [group.id]: true }))
+                        }}
+                        sx={{ fontSize: '0.68rem', height: 20, bgcolor: 'action.hover' }}
+                        clickable
+                      />
+                    )}
+                    {expandedGroups[group.id] && group.products.length > 5 && (
+                      <Chip
+                        label="收合"
+                        size="small"
+                        variant="outlined"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setExpandedGroups(prev => ({ ...prev, [group.id]: false }))
+                        }}
+                        sx={{ fontSize: '0.68rem', height: 20, bgcolor: 'action.hover' }}
+                        clickable
+                      />
+                    )}
                   </Box>
                 )}
               </Box>
@@ -209,6 +265,7 @@ export default function GroupListPage({ onSelectGroup }: Props) {
       </Fab>
 
       <GroupFormDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+      <AdminLoginDialog open={adminOpen} onClose={() => setAdminOpen(false)} />
     </Box>
   )
 }

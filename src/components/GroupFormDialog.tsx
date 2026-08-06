@@ -20,7 +20,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlineOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import type { TransitionProps } from '@mui/material/transitions'
 import dayjs from 'dayjs'
-import type { Group } from '../types'
+import type { Group, Member } from '../types'
 import { useGroupBuy, type CreateGroupInput } from '../GroupBuyContext'
 
 const SlideUp = forwardRef(function SlideUp(
@@ -34,16 +34,17 @@ interface FormValues {
   title: string
   description: string
   deadline: dayjs.Dayjs | null
-  products: { name: string; unit: string; price: string; note: string }[]
+  products: { productId?: string; name: string; unit: string; price: string; note: string }[]
 }
 
 interface Props {
   open: boolean
   onClose: () => void
   editGroup?: Group
+  members?: Member[]
 }
 
-export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
+export default function GroupFormDialog({ open, onClose, editGroup, members }: Props) {
   const { createGroup, updateGroup } = useGroupBuy()
   const isEdit = !!editGroup
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -52,7 +53,7 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
     title: '',
     description: '',
     deadline: dayjs().add(7, 'day'),
-    products: [{ name: '', unit: '份', price: '', note: '' }],
+    products: [{ productId: undefined, name: '', unit: '份', price: '', note: '' }],
   }
 
   const { control, register, handleSubmit, reset, formState: { errors } } =
@@ -68,6 +69,7 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
         description: editGroup.description ?? '',
         deadline: dayjs(editGroup.deadline),
         products: editGroup.products.map((p) => ({
+          productId: p.id,
           name: p.name,
           unit: p.unit,
           price: String(p.price),
@@ -79,6 +81,15 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  const orderedProductIds = Array.from(
+    new Set(
+      members
+        ?.flatMap((m) => m.items)
+        .filter((item) => item.quantity > 0)
+        .map((item) => item.productId) ?? []
+    )
+  )
 
   const onSubmit = (values: FormValues) => {
     const data: CreateGroupInput = {
@@ -168,16 +179,26 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
             <Typography sx={{ fontWeight: 700, fontSize: '0.875rem', mb: 1.5 }}>商品項目</Typography>
 
             <Stack spacing={1.5}>
-              {fields.map((field, index) => (
+              {fields.map((field, index) => {
+                const isOrdered = field.productId ? orderedProductIds.includes(field.productId) : false
+
+                return (
                 <Box
                   key={field.id}
                   sx={{ p: 1.5, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'grey.50' }}
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 600 }}>
-                      商品 {index + 1}
-                    </Typography>
-                    {fields.length > 1 && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 600 }}>
+                        商品 {index + 1}
+                      </Typography>
+                      {isOrdered && (
+                        <Typography sx={{ fontSize: '0.7rem', color: 'error.main' }}>
+                          (已有人選購，無法修改)
+                        </Typography>
+                      )}
+                    </Box>
+                    {fields.length > 1 && !isOrdered && (
                       <IconButton size="small" color="error" onClick={() => remove(index)}>
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
@@ -189,6 +210,7 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
                         label="名稱"
                         size="small"
                         sx={{ flex: 2 }}
+                        disabled={isOrdered}
                         {...register(`products.${index}.name`, {
                           required: index === 0 ? '請輸入商品名稱' : false,
                         })}
@@ -199,6 +221,7 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
                         label="單位"
                         size="small"
                         sx={{ flex: 1 }}
+                        disabled={isOrdered}
                         {...register(`products.${index}.unit`)}
                       />
                     </Box>
@@ -208,6 +231,7 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
                         size="small"
                         type="number"
                         sx={{ flex: 1 }}
+                        disabled={isOrdered}
                         slotProps={{ htmlInput: { min: 0 } }}
                         {...register(`products.${index}.price`)}
                       />
@@ -215,12 +239,13 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
                         label="備註（選填）"
                         size="small"
                         sx={{ flex: 2 }}
+                        disabled={isOrdered}
                         {...register(`products.${index}.note`)}
                       />
                     </Box>
                   </Stack>
                 </Box>
-              ))}
+              )})}
             </Stack>
 
             <Button
@@ -229,7 +254,7 @@ export default function GroupFormDialog({ open, onClose, editGroup }: Props) {
               sx={{ mt: 1.5, borderStyle: 'dashed', borderWidth: 1.5, py: 1 }}
               startIcon={<AddCircleOutlineIcon />}
               onClick={() => {
-                append({ name: '', unit: '份', price: '', note: '' })
+                append({ productId: undefined, name: '', unit: '份', price: '', note: '' })
                 setTimeout(() => {
                   if (scrollRef.current) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight

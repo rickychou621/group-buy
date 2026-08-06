@@ -211,24 +211,7 @@ export default function MemberFormDialog({ open, onClose, group, editMember }: P
               })}
             </Stack>
 
-            {/* 合計 */}
-            {grandTotal > 0 && (
-              <Box
-                sx={{
-                  mt: 1.5,
-                  p: 1.5,
-                  borderRadius: 2,
-                  bgcolor: 'primary.main',
-                  color: '#fff',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'inherit' }}>合計</Typography>
-                <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: 'inherit' }}>${grandTotal}</Typography>
-              </Box>
-            )}
+
           </Box>
 
           <TextField
@@ -241,11 +224,19 @@ export default function MemberFormDialog({ open, onClose, group, editMember }: P
       </DialogContent>
 
       <Divider />
-      <DialogActions sx={{ px: 2, py: 1.5, gap: 1 }}>
-        <Button onClick={onClose} color="inherit">取消</Button>
-        <Button variant="contained" onClick={handleSubmit(onSubmit)}>
-          {isEdit ? '儲存' : '確認參團'}
-        </Button>
+      <DialogActions sx={{ px: 2, py: 1.5, display: 'flex', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 1 }}>
+          <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.secondary' }}>合計</Typography>
+          <Typography sx={{ fontSize: '1.25rem', fontWeight: 700, color: 'primary.main' }}>
+            ${grandTotal || 0}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button onClick={onClose} color="inherit">取消</Button>
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
+            {isEdit ? '儲存' : '確認參團'}
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   )

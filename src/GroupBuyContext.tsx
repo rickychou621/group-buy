@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { Group, GroupStatus, Member, MemberItem, Product } from './types'
-import { genId, loadGroups, loadMembers, saveGroups, saveMembers } from './storage'
+import { genId, loadGroups, loadMembers, saveGroups, saveMembers, loadAdminStatus, saveAdminStatus, isMyMember, saveMyMemberId } from './storage'
 
 // ---------- 輸入型別 ----------
 
@@ -30,6 +30,10 @@ export interface CreateMemberInput {
 interface GroupBuyContextValue {
   groups: Group[]
   members: Member[]
+  isAdmin: boolean
+  login: (password: string) => boolean
+  logout: () => void
+  isMyMember: (id: string) => boolean
   createGroup: (data: CreateGroupInput) => Group
   updateGroup: (id: string, data: CreateGroupInput) => void
   updateGroupStatus: (id: string, status: GroupStatus) => void
@@ -47,9 +51,21 @@ const GroupBuyContext = createContext<GroupBuyContextValue | null>(null)
 export function GroupBuyProvider({ children }: { children: ReactNode }) {
   const [groups, setGroups] = useState<Group[]>(() => loadGroups())
   const [members, setMembers] = useState<Member[]>(() => loadMembers())
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => loadAdminStatus())
 
   useEffect(() => { saveGroups(groups) }, [groups])
   useEffect(() => { saveMembers(members) }, [members])
+  useEffect(() => { saveAdminStatus(isAdmin) }, [isAdmin])
+
+  const login = useCallback((password: string) => {
+    if (password === 'admin') {
+      setIsAdmin(true)
+      return true
+    }
+    return false
+  }, [])
+
+  const logout = useCallback(() => setIsAdmin(false), [])
 
   const createGroup = useCallback((data: CreateGroupInput): Group => {
     const g: Group = {
@@ -114,6 +130,7 @@ export function GroupBuyProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     }
     setMembers((prev) => [...prev, m])
+    saveMyMemberId(m.id)
     return m
   }, [])
 
@@ -135,7 +152,7 @@ export function GroupBuyProvider({ children }: { children: ReactNode }) {
   return (
     <GroupBuyContext.Provider
       value={{
-        groups, members,
+        groups, members, isAdmin, login, logout, isMyMember,
         createGroup, updateGroup, updateGroupStatus, deleteGroup, getGroup,
         getMembersByGroup, createMember, updateMember, togglePaid, deleteMember,
       }}
