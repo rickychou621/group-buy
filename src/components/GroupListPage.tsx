@@ -41,7 +41,7 @@ export default function GroupListPage({ onSelectGroup }: Props) {
       {/* 頂部標題漸層 */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #6750A4 0%, #9C71DC 100%)',
+          background: 'linear-gradient(135deg, #F3B123 0%, #FFD54F 100%)',
           px: 2.5,
           pt: 3.5,
           pb: 3,
@@ -49,9 +49,16 @@ export default function GroupListPage({ onSelectGroup }: Props) {
         }}
       >
         <Typography sx={{ fontSize: '0.75rem', opacity: 0.8, color: 'inherit' }}>團購管理</Typography>
-        <Typography sx={{ fontSize: '1.4rem', fontWeight: 700, mt: 0.5, color: 'inherit' }}>
-          🛒 我的團購
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+          <Box
+            component="img"
+            src="/logo.jpg"
+            sx={{ width: 28, height: 28, borderRadius: 1 }}
+          />
+          <Typography sx={{ fontSize: '1.4rem', fontWeight: 700, color: 'inherit' }}>
+            我的團購
+          </Typography>
+        </Box>
         <Typography sx={{ fontSize: '0.85rem', mt: 0.5, opacity: 0.75, color: 'inherit' }}>
           共 {groups.length} 個活動
         </Typography>

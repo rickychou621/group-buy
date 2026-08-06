@@ -10,8 +10,8 @@ import App from './App'
 const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#6750A4' },      // Material You 紫色
-    secondary: { main: '#E8DEF8' },
+    primary: { main: '#F3B123' },      // 暖黃色系 (in House)
+    secondary: { main: '#FFF3E0' },
     success: { main: '#2E7D32' },
     background: {
       default: '#f4f4f8',
