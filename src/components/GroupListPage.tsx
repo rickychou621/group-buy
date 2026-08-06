@@ -17,6 +17,7 @@ import type { GroupStatus } from '../types'
 import { useGroupBuy } from '../GroupBuyContext'
 import { calcGroupStats, fmtAmount, fmtDate, isExpired, statusColor, statusLabel } from '../utils'
 import GroupFormDialog from './GroupFormDialog'
+import logoUrl from '../assets/logo.jpg'
 
 interface Props {
   onSelectGroup: (id: string) => void
@@ -52,7 +53,7 @@ export default function GroupListPage({ onSelectGroup }: Props) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
           <Box
             component="img"
-            src="/logo.jpg"
+            src={logoUrl}
             sx={{ width: 28, height: 28, borderRadius: 1 }}
           />
           <Typography sx={{ fontSize: '1.4rem', fontWeight: 700, color: 'inherit' }}>

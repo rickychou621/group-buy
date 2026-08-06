@@ -168,8 +168,8 @@ export default function MemberFormDialog({ open, onClose, group, editMember }: P
                           p: 1.5,
                           borderRadius: 2,
                           border: '1.5px solid',
-                          borderColor: hasQty ? 'primary.main' : 'divider',
-                          bgcolor: hasQty ? 'primary.50' : 'grey.50',
+                          borderColor: 'primary.main',
+                          bgcolor: 'primary.50',
                           transition: 'all 0.2s',
                         }}
                       >
@@ -201,11 +201,9 @@ export default function MemberFormDialog({ open, onClose, group, editMember }: P
                           sx={{ width: 108 }}
                         />
 
-                        {hasQty && (
-                          <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: 'primary.main', minWidth: 52, textAlign: 'right' }}>
-                            ${subtotal}
-                          </Typography>
-                        )}
+                        <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: 'primary.main', minWidth: 52, textAlign: 'right' }}>
+                          ${subtotal}
+                        </Typography>
                       </Box>
                     )}
                   />
