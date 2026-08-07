@@ -194,12 +194,12 @@ export default function GroupFormDialog({ open, onClose, editGroup, members }: P
                       </Typography>
                       {isOrdered && (
                         <Typography sx={{ fontSize: '0.7rem', color: 'error.main' }}>
-                          (已有人選購，無法修改)
+                          (已有人選購，無法刪除)
                         </Typography>
                       )}
                     </Box>
-                    {fields.length > 1 && !isOrdered && (
-                      <IconButton size="small" color="error" onClick={() => remove(index)}>
+                    {fields.length > 1 && (
+                      <IconButton size="small" color="error" disabled={isOrdered} onClick={() => remove(index)}>
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
                     )}
@@ -210,7 +210,6 @@ export default function GroupFormDialog({ open, onClose, editGroup, members }: P
                         label="名稱"
                         size="small"
                         sx={{ flex: 2 }}
-                        disabled={isOrdered}
                         {...register(`products.${index}.name`, {
                           required: index === 0 ? '請輸入商品名稱' : false,
                         })}
@@ -221,7 +220,6 @@ export default function GroupFormDialog({ open, onClose, editGroup, members }: P
                         label="單位"
                         size="small"
                         sx={{ flex: 1 }}
-                        disabled={isOrdered}
                         {...register(`products.${index}.unit`)}
                       />
                     </Box>
@@ -231,7 +229,6 @@ export default function GroupFormDialog({ open, onClose, editGroup, members }: P
                         size="small"
                         type="number"
                         sx={{ flex: 1 }}
-                        disabled={isOrdered}
                         slotProps={{ htmlInput: { min: 0 } }}
                         {...register(`products.${index}.price`)}
                       />
@@ -239,7 +236,6 @@ export default function GroupFormDialog({ open, onClose, editGroup, members }: P
                         label="備註（選填）"
                         size="small"
                         sx={{ flex: 2 }}
-                        disabled={isOrdered}
                         {...register(`products.${index}.note`)}
                       />
                     </Box>

@@ -3,11 +3,9 @@ import { useState } from 'react'
 import {
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
-  TextField,
   Typography,
 } from '@mui/material'
 import { useGroupBuy } from '../GroupBuyContext'
@@ -19,49 +17,32 @@ interface Props {
 
 export default function AdminLoginDialog({ open, onClose }: Props) {
   const { login } = useGroupBuy()
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = () => {
-    if (login(password)) {
-      onClose()
-      setPassword('')
-      setError(false)
-    } else {
-      setError(true)
-    }
+  const handleLogin = async () => {
+    setLoading(true)
+    await login()
+    setLoading(false)
+    onClose()
   }
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle sx={{ fontWeight: 700 }}>管理員登入</DialogTitle>
       <Divider />
-      <DialogContent sx={{ py: 3 }}>
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 2 }}>
-          請輸入管理員密碼以啟用特殊權限（預設密碼：admin）
+      <DialogContent sx={{ py: 4, textAlign: 'center' }}>
+        <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 3 }}>
+          請使用指定的 Google 帳號登入，以啟用管理員特殊權限。
         </Typography>
-        <TextField
-          autoFocus
-          fullWidth
-          size="small"
-          type="password"
-          label="密碼"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value)
-            setError(false)
-          }}
-          error={error}
-          helperText={error ? '密碼錯誤' : ''}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleLogin()
-          }}
-        />
+        <Button 
+          variant="contained" 
+          onClick={handleLogin}
+          disabled={loading}
+          sx={{ py: 1, px: 3, fontSize: '1rem', borderRadius: 2 }}
+        >
+          {loading ? '登入中...' : '使用 Google 帳號登入'}
+        </Button>
       </DialogContent>
-      <DialogActions sx={{ px: 2, pb: 2 }}>
-        <Button onClick={onClose} color="inherit">取消</Button>
-        <Button onClick={handleLogin} variant="contained">登入</Button>
-      </DialogActions>
     </Dialog>
   )
 }

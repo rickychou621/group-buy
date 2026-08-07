@@ -1,15 +1,42 @@
 // ===== 主 App =====
 import { useState } from 'react'
-import { Box } from '@mui/material'
-import { GroupBuyProvider } from './GroupBuyContext'
+import { Box, CircularProgress } from '@mui/material'
+import { GroupBuyProvider, useGroupBuy } from './GroupBuyContext'
 import GroupListPage from './components/GroupListPage'
 import GroupDetailPage from './components/GroupDetailPage'
 
 type Page = { name: 'list' } | { name: 'detail'; groupId: string }
 
-export default function App() {
+function MainContent() {
+  const { isLoading } = useGroupBuy()
   const [page, setPage] = useState<Page>({ name: 'list' })
 
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', width: '100%' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  return (
+    <>
+      {page.name === 'list' && (
+        <GroupListPage
+          onSelectGroup={(id) => setPage({ name: 'detail', groupId: id })}
+        />
+      )}
+      {page.name === 'detail' && (
+        <GroupDetailPage
+          groupId={page.groupId}
+          onBack={() => setPage({ name: 'list' })}
+        />
+      )}
+    </>
+  )
+}
+
+export default function App() {
   return (
     <GroupBuyProvider>
       {/* 手機感外框：桌機寬度時顯示白色卡片在中間 */}
@@ -31,17 +58,7 @@ export default function App() {
             position: 'relative',
           }}
         >
-          {page.name === 'list' && (
-            <GroupListPage
-              onSelectGroup={(id) => setPage({ name: 'detail', groupId: id })}
-            />
-          )}
-          {page.name === 'detail' && (
-            <GroupDetailPage
-              groupId={page.groupId}
-              onBack={() => setPage({ name: 'list' })}
-            />
-          )}
+          <MainContent />
         </Box>
       </Box>
     </GroupBuyProvider>
